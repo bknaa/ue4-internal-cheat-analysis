@@ -1,6 +1,12 @@
 # ue4-internal-cheat-analysis
 Static malware analysis and architectural breakdown of an obfuscated internal UE4 cheat DLL vs. Riot Vanguard mitigation mechanics.
 
+Code Distribution & Ethics Disclaimer: To preserve competitive integrity and avoid facilitating 
+cheat development, the full executable binary (.dll), download links, and any reconstructed or 
+decompiled source code are strictly excluded from this repository. The assembly snippets and 
+string dumps provided above are limited to structural analysis and architectural signatures, 
+intended solely for defensive research and anti-cheat detection purposes.
+
 # Technical Analysis Report: Unreal Engine 4 Internal Cheat Artifacts vs. Riot Vanguard
 
 ## 1. Executive Summary
