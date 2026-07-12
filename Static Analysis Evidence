@@ -1,1 +1,181 @@
+# Static Analysis Evidence
 
+> Analysis method: command-line static analysis (`objdump -x`, `objdump -d`, `strings`) on a Linux
+> host. No debugger or interactive disassembler (x64dbg / Ghidra) was used to produce this output —
+> all data below is raw tool output, not a screenshot of a GUI. Timestamps, addresses, and byte
+> sequences are copied verbatim from the tool, not paraphrased or reconstructed.
+
+---
+
+## 1. Import Address Table (raw `objdump -x` output)
+
+```
+There is an import table in .rdata at 0x18009ce3c
+
+The Import Tables (interpreted .rdata section contents)
+ vma:            Hint    Time      Forward  DLL       First
+                 Table   Stamp     Chain    Name      Thunk
+ 0009ce3c	0009cec8 00000000 00000000 0009d36a 00074010
+
+	DLL Name: KERNEL32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	9d28a	 1564  VirtualQuery
+	9d29a	  733  GetProcAddress
+	9d2ac	 1012  LoadLibraryA
+	9d268	 1556  VirtualAlloc
+	9d800	  271  CreateThread
+	9d64a	  944  IsDebuggerPresent
+	...
+
+ 0009ce50	0009d200 00000000 00000000 0009d42a 00074348
+
+	DLL Name: USER32.dll
+	vma:  Hint/Ord Member-Name Bound-To
+	9d3b0	  375  GetKeyboardState
+	9d3c4	  368  GetKeyNameTextA
+	9d378	   32  CallNextHookEx
+	9d39c	  296  GetAsyncKeyState
+	9d38a	  289  GetActiveWindow
+	9d3d6	  969  ToUnicode
+	9d418	  798  ScreenToClient
+	9d408	  330  GetCursorPos
+	9d3f4	  469  GetSystemMetrics
+	9d3e2	  651  MapVirtualKeyW
+
+ 0009ce64	0009ceb8 00000000 00000000 0009d446 00074000
+
+	DLL Name: ADVAPI32.dll
+	9d436	  358  GetUserNameW
+
+ 0009ce78	0009d1f0 00000000 00000000 0009d468 00074338
+
+	DLL Name: SHELL32.dll
+	9d454	  332  SHGetFolderPathA
+
+ 0009ce8c	0009d258 00000000 00000000 0009d482 000743a0
+
+	DLL Name: WINMM.dll
+	9d474	    8  PlaySoundW
+```
+
+(Full 145-line table available on request — trimmed here to the entries relevant to the report.)
+
+---
+
+## 2. Export Table / Module Identity (raw `objdump -x` output)
+
+```
+There is an export table in .rdata at 0x18009cde0
+
+The Export Tables (interpreted .rdata section contents)
+
+Export Flags 			0
+Time/Date stamp 		ffffffff
+Major/Minor 			0/0
+Name 				000000000009ce12 JJGBFRV368BY238RB8R3HFSNS.dll
+Ordinal Base 			1
+Number in:
+	Export Address Table 		00000001
+	[Name Pointer/Ordinal] Table	00000001
+
+Export Address Table -- Ordinal Base 1
+	[   0] +base[   1] 75e4 Export RVA
+
+[Ordinal/Name Pointer] Table
+	[   0] MertdOirf__
+```
+
+---
+
+## 3. PDB Debug Path Leak (raw `strings` output)
+
+```
+c:\Users\yigit\Desktop\dvn\project\x64\Release\JJGBFRV368BY238RB8R3HFSNS.pdb
+```
+
+---
+
+## 4. Cheat-Specific Configuration/Feature Strings (raw `strings` output)
+
+```
+\wechsen.cfg
+Config: wechsen.cfg (Desktop)
+Aim key
+Menu Key
+Spin value
+Pitch Value
+Yaw Value
+Fake lag
+Jitter range
+Desync range
+Resolver Intensity
+Intensity visible chams
+Intensity invisible chams
+[+] ProcessEvent hook initialized.
+```
+
+---
+
+## 5. Unreal Engine / Valorant Blueprint Class Strings (raw `strings` output, sample)
+
+```
+Phoenix_PC_C
+Killjoy_PC_C
+Breach_PC_C
+Sarge_PC_C
+Wraith_PC_C
+Deadeye_PC_C
+Vampire_PC_C
+Gumshoe_PC_C
+AssaultRifle_AK_C
+AssaultRifle_ACR_C
+SawedOffShotgun_C
+LeverSniperRifle_C
+LightMachineGun_C
+Pawn_TrainingBot_Defuse_Ultimate_C
+Pawn_TrainingBot_DanceHall_Easy_C
+```
+
+---
+
+## 6. Disassembly — Entry Point (raw `objdump -d -M intel` output)
+
+```
+0000000180044f54 <.text+0x43f54>:
+   180044f54:	48 89 5c 24 08       	mov    QWORD PTR [rsp+0x8],rbx
+   180044f59:	48 89 74 24 10       	mov    QWORD PTR [rsp+0x10],rsi
+   180044f5e:	57                   	push   rdi
+   180044f5f:	48 83 ec 20          	sub    rsp,0x20
+   180044f63:	49 8b f8             	mov    rdi,r8
+   180044f66:	8b da                	mov    ebx,edx
+   180044f68:	48 8b f1             	mov    rsi,rcx
+   180044f6b:	83 fa 01             	cmp    edx,0x1
+   180044f6e:	75 05                	jne    0x180044f75
+   180044f70:	e8 5f 05 00 00       	call   0x1800454d4
+   180044f75:	4c 8b c7             	mov    r8,rdi
+   180044f78:	8b d3                	mov    edx,ebx
+   180044f7a:	48 8b ce             	mov    rcx,rsi
+   180044f7d:	48 8b 5c 24 30       	mov    rbx,QWORD PTR [rsp+0x30]
+   180044f82:	48 8b 74 24 38       	mov    rsi,QWORD PTR [rsp+0x38]
+   180044f87:	48 83 c4 20          	add    rsp,0x20
+   180044f8b:	5f                   	pop    rdi
+   180044f8c:	e9 9b fe ff ff       	jmp    0x180044e2c
+```
+
+**Note on this snippet:** this is the compiler-generated `DllMain`/CRT startup thunk (register
+save, `reason == DLL_PROCESS_ATTACH` check via `cmp edx,0x1`, tail-jump into the real init routine
+at `0x180044e2c`). It is not itself the `ProcessEvent` hook — it's included here only as a verified,
+attributable disassembly sample. Locating and disassembling the actual hook-installation routine
+would require deeper analysis than string matching (which is what identified the
+`"[+] ProcessEvent hook initialized."` string in section 4).
+
+---
+
+## Honest scope of this evidence
+
+- Everything above is real tool output from this specific file, not fabricated.
+- This is **not** a Ghidra or x64dbg screenshot — no interactive disassembler was run. If a repo
+  presents this as a GUI tool's output, that's a mischaracterization of the method, not of the data.
+- The disassembly snippet is a generic compiler-emitted stub, included for attribution/verifiability,
+  not because it proves the hooking behavior — the string evidence (section 4) is what supports the
+  "ProcessEvent hook" and "cheat feature" claims, and that distinction should stay clear in any report.
